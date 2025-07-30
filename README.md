@@ -6,12 +6,44 @@
 ### Prerequisites
 - Docker and Docker Compose
 - Node.js and Yarn (for asset compilation)
+- dip (Docker development workflow tool)
+
+### Dip Commands
+
+This project uses [dip](https://github.com/bibendi/dip) to simplify Docker development workflows. Here are the most common commands:
+
+**Development Environment:**
+- `dip up` - Start all services
+- `dip down` - Stop all services
+- `dip restart` - Restart all services
+- `dip status` - Show service status
+- `dip logs [service]` - View service logs
+- `dip shell` - Open shell in web container
+- `dip psql` - Connect to PostgreSQL database
+
+**Rails Commands:**
+- `dip rails c` - Rails console
+- `dip rails s` - Rails server
+- `dip rails db:migrate` - Run migrations
+- `dip rails db:seed` - Seed database
+- `dip rails db:reset` - Reset database
+
+**Testing:**
+- `dip test` - Run all tests
+- `dip test:up` - Start test environment
+- `dip test:down` - Stop test environment
+- `dip test:shell` - Open shell in test container
+- `dip test:psql` - Connect to test database
+
+**Provisioning:**
+- `dip provision` - Full environment setup (down, build, up)
+- `dip build` - Rebuild containers
 
 ### Development Environment
 
 1. **Start the development environment:**
    ```bash
-   docker compose up
+   dip up
    ```
 
 2. **Access the application:**
@@ -19,19 +51,19 @@
 
 3. **View logs:**
    ```bash
-   docker compose logs -f web
+   dip logs web
    ```
 
 4. **Stop the environment:**
    ```bash
-   docker compose down
+   dip down
    ```
 
 ### Test Environment
 
 1. **Start the test environment:**
    ```bash
-   docker compose -f docker-compose.test.yml up
+   dip test:up
    ```
 
 2. **Access the test application:**
@@ -40,21 +72,21 @@
 3. **Run specs:**
    ```bash
    # Run all specs
-   docker compose -f docker-compose.test.yml exec web bundle exec rspec
+   dip test
 
    # Run specific spec file
-   docker compose -f docker-compose.test.yml exec web bundle exec rspec spec/models/user_spec.rb
+   dip test spec/models/user_spec.rb
 
    # Run specs with documentation format
-   docker compose -f docker-compose.test.yml exec web bundle exec rspec --format documentation
+   dip test --format documentation
 
    # Run specs and watch for changes
-   docker compose -f docker-compose.test.yml exec web bundle exec rspec --watch
+   dip test --watch
    ```
 
 4. **Stop the test environment:**
    ```bash
-   docker compose -f docker-compose.test.yml down
+   dip test:down
    ```
 
 ### Environment Configuration
@@ -69,17 +101,19 @@ The application uses a hierarchical environment configuration:
 
 **Create and migrate the development database:**
 ```bash
-docker compose exec web bundle exec rails db:create db:migrate
+dip rails db:create db:migrate
 ```
 
 **Create and migrate the test database:**
 ```bash
-docker compose -f docker-compose.test.yml exec web bundle exec rails db:create db:migrate
+dip test:shell
+# Then inside the test container:
+bundle exec rails db:create db:migrate
 ```
 
 **Reset development database:**
 ```bash
-docker compose exec web bundle exec rails db:reset
+dip rails db:reset
 ```
 
 ## Testing with RSpec
@@ -90,42 +124,42 @@ This project uses RSpec for testing instead of minitest. All specs are located i
 
 **Run all specs:**
 ```bash
-docker compose -f docker-compose.test.yml exec web bundle exec rspec
+dip test
 ```
 
 **Run specific spec file:**
 ```bash
-docker compose -f docker-compose.test.yml exec web bundle exec rspec spec/models/user_spec.rb
+dip test spec/models/user_spec.rb
 ```
 
 **Run specs in a specific directory:**
 ```bash
-docker compose -f docker-compose.test.yml exec web bundle exec rspec spec/models/
-docker compose -f docker-compose.test.yml exec web bundle exec rspec spec/controllers/
+dip test spec/models/
+dip test spec/controllers/
 ```
 
 **Run specs with different formats:**
 ```bash
 # Documentation format (shows test descriptions)
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --format documentation
+dip test --format documentation
 
 # Progress format (shows dots for passing tests)
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --format progress
+dip test --format progress
 
 # JSON format (for CI/CD integration)
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --format json
+dip test --format json
 ```
 
 **Run specs with additional options:**
 ```bash
 # Run only failing specs
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --only-failures
+dip test --only-failures
 
 # Run specs and watch for changes
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --watch
+dip test --watch
 
 # Run specs with random seed
-docker compose -f docker-compose.test.yml exec web bundle exec rspec --seed 12345
+dip test --seed 12345
 ```
 
 ### Spec Organization

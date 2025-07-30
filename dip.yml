@@ -1,0 +1,112 @@
+version: "8.1"
+
+environment:
+  RAILS_ENV: development
+
+compose:
+  files:
+    - docker-compose.yml
+  project_name: zayzoon
+
+provision:
+  - docker compose down
+  - docker compose build
+  - docker compose up -d
+
+interaction:
+  # Core development commands
+  rails:
+    description: "Run Rails commands"
+    service: web
+    command: bundle exec rails
+    subcommands:
+      c:
+        description: "Rails console"
+        command: bundle exec rails console
+      s:
+        description: "Rails server"
+        command: bundle exec rails server -b 0.0.0.0 -p 3000
+      db:migrate:
+        description: "Run database migrations"
+        command: bundle exec rails db:migrate
+      db:rollback:
+        description: "Rollback database migrations"
+        command: bundle exec rails db:rollback
+      db:seed:
+        description: "Seed the database"
+        command: bundle exec rails db:seed
+      db:reset:
+        description: "Reset the database"
+        command: bundle exec rails db:drop db:create db:migrate db:seed
+
+  psql:
+    description: "Connect to PostgreSQL database"
+    command: docker compose exec db psql -U postgres -d granite_development
+
+  logs:
+    description: "View service logs"
+    command: docker compose logs
+    subcommands:
+      web:
+        description: "View web service logs"
+        command: docker compose logs web
+      db:
+        description: "View database logs"
+        command: docker compose logs db
+      redis:
+        description: "View Redis logs"
+        command: docker compose logs redis
+      worker:
+        description: "View worker logs"
+        command: docker compose logs worker
+
+  shell:
+    description: "Open shell in web container"
+    service: web
+    command: bash
+
+  # Service management
+  up:
+    description: "Start all services"
+    command: docker compose up -d
+
+  down:
+    description: "Stop all services"
+    command: docker compose down
+
+  restart:
+    description: "Restart all services"
+    command: docker compose restart
+
+  status:
+    description: "Show service status"
+    command: docker compose ps
+
+  build:
+    description: "Rebuild containers"
+    command: docker compose build
+
+  # Test environment commands
+  test:
+    description: "Run tests"
+    command: docker compose -f docker-compose.test.yml exec web bundle exec rspec
+
+  test:up:
+    description: "Start test environment"
+    command: docker compose -f docker-compose.test.yml up -d
+
+  test:down:
+    description: "Stop test environment"
+    command: docker compose -f docker-compose.test.yml down
+
+  test:restart:
+    description: "Restart test environment"
+    command: docker compose -f docker-compose.test.yml restart
+
+  test:psql:
+    description: "Connect to test database"
+    command: docker compose -f docker-compose.test.yml exec db psql -U postgres -d granite_test
+
+  test:shell:
+    description: "Open shell in test container"
+    command: docker compose -f docker-compose.test.yml exec web bash
