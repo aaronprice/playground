@@ -1,0 +1,16 @@
+:concurrency: 5
+:queues:
+  - default
+  - mailers
+  - active_storage
+
+:max_retries: 3
+:retry_interval: 5
+
+# Development settings
+:verbose: true
+:logfile: log/sidekiq.log
+
+# Redis connection
+:redis:
+  :url: redis://redis:6379/0
