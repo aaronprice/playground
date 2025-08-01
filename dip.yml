@@ -6,7 +6,7 @@ environment:
 compose:
   files:
     - docker-compose.yml
-  project_name: zayzoon
+  project_name: playground
 
 provision:
   - docker compose down
@@ -41,7 +41,7 @@ interaction:
 
   psql:
     description: "Connect to PostgreSQL database"
-    command: docker compose exec db psql -U postgres -d granite_development
+    command: docker compose exec db psql -U postgres -d playground_development
 
   logs:
     description: "View service logs"
@@ -105,7 +105,7 @@ interaction:
 
   test:psql:
     description: "Connect to test database"
-    command: docker compose -f docker-compose.test.yml exec db psql -U postgres -d granite_test
+    command: docker compose -f docker-compose.test.yml exec db psql -U postgres -d playground_test
 
   test:shell:
     description: "Open shell in test container"
