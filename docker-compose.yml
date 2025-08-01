@@ -5,7 +5,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "3101:3000"
+      - "3102:3000"
     env_file: .env.development
     depends_on:
       - db
