@@ -1,8 +1,6 @@
-require "dry/monads"
 require "dry/schema"
 
 class PurchaseOrders::Receive
-  include Dry::Monads[:result]
   include Dry::Schema
   include ActiveModel::Model
 
@@ -45,6 +43,8 @@ class PurchaseOrders::Receive
     required(:currency).filled(:string, format?: /\A(?:USD|CAD)\z/)
   end
 
+  Result = Struct.new(:success?, :value, :errors)
+
   # == Attributes ===========================================================
 
   attr_reader :params, :value,
@@ -81,15 +81,11 @@ class PurchaseOrders::Receive
     if valid?
       perform
     else
-      Failure(errors_to_hash)
+      Result.new(false, {}, errors.to_hash.deep_stringify_keys)
     end
   end
 
   private
-
-  def errors_to_hash
-    errors.to_hash.transform_keys(&:to_s)
-  end
 
   def validate_inputs
     validate_lines
@@ -101,7 +97,7 @@ class PurchaseOrders::Receive
   # objects in an array. Without it, if "lines" was
   # empty in the params, it would result in a 500 error.
   def validate_lines
-    if @params[:lines].is_a?(Array) && @params[:lines].empty?
+    if @params["lines"].is_a?(Array) && @params["lines"].empty?
       errors.add(:lines, "cannot be empty")
     end
   end
@@ -120,7 +116,7 @@ class PurchaseOrders::Receive
     upsert_purchase_order
     upsert_purchase_order_lines
 
-    Success(value)
+    Result.new(true, @value, {})
   end
 
   def upsert_customer

@@ -4,9 +4,9 @@ class Api::V1::PurchaseOrdersController < ApplicationController
     service = PurchaseOrders::Receive.(purchase_order_params)
 
     if service.success?
-      render json: service.value!, status: :created
+      render json: service.value, status: :created
     else
-      render json: { errors: service.failure }, status: :unprocessable_entity
+      render json: { errors: service.errors }, status: :unprocessable_content
     end
   end
 
