@@ -1,5 +1,35 @@
 # Playground
 
+## Scenario: Partner-submitted Purchase Order (PO) Ingestion
+Context: B2B partners POST purchase orders into your system. Each partner has a 32-char token. The API validates payloads, looks up live pricing & availability from an external ERP, persists data across multiple models, returns a decorated JSON view of the PO, and kicks off async fulfillment.
+
+```text
+Endpoint
+POST /api/v1/purchase_orders
+Headers:
+  Content-Type: application/json
+  X-Api-Token: <32-char token>
+Body:
+{
+  "external_po_id": "PO-12345",
+  "customer": {
+    "external_customer_ref": "CUST-998",
+    "name": "Acme Inc",
+    "email": "buy@acme.example",
+    "shipping_address": { "line1":"1 Main", "city":"NYC", "region":"NY", "postal_code":"10001", "country":"US" }
+  },
+  "lines": [
+    { "sku":"SKU-001", "quantity":2 },
+    { "sku":"SKU-002", "quantity":1 }
+  ],
+  "requested_ship_date": "2025-08-05",
+  "currency": "USD"
+}
+```
+External dependency: For each SKU, call your ERP’s HTTP API to fetch current price, tax code, and available-to-promise (ATP). E.g. GET https://erp.example/api/sku/SKU-001?currency=USD.
+
+Async work: Reserve inventory and notify WMS asynchronously; also email partner upon allocation.
+
 
 ## Setup
 
