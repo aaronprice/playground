@@ -21,12 +21,13 @@ class Api::V1::PurchaseOrdersController < ApplicationController
         :external_customer_ref,
         :name,
         :email,
-        address: [
-          :line_1,
-          :line_2,
+        shipping_address: [
+          :line1,
+          :line2,
           :city,
           :state,
-          :zip,
+          :postal_code,
+          :country,
         ]
       ],
       lines: [[

@@ -16,7 +16,7 @@ Body:
     "external_customer_ref": "CUST-998",
     "name": "Acme Inc",
     "email": "buy@acme.example",
-    "shipping_address": { "line1":"1 Main", "city":"NYC", "region":"NY", "postal_code":"10001", "country":"US" }
+    "shipping_address": { "line1":"1 Main", "city":"NYC", "state":"NY", "postal_code":"10001", "country":"US" }
   },
   "lines": [
     { "sku":"SKU-001", "quantity":2 },

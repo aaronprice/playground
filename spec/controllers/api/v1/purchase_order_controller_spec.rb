@@ -11,12 +11,13 @@ RSpec.describe Api::V1::PurchaseOrdersController, type: :controller do
           external_customer_ref: "CUST-998",
           name: "Acme Inc",
           email: "buy@acme.example",
-          address: {
-            line_1: "1 Main St",
-            line_2: "Suite 100",
+          shipping_address: {
+            line1: "1 Main St",
+            line2: "Suite 100",
             city: "New York",
             state: "NY",
-            zip: "10001"
+            postal_code: "10001",
+            country: "US"
           }
         },
         lines: [
@@ -51,11 +52,12 @@ RSpec.describe Api::V1::PurchaseOrdersController, type: :controller do
             external_customer_ref: nil,
             name: nil,
             email: "invalid-email",
-            address: {
-              line_1: nil,
+            shipping_address: {
+              line1: nil,
               city: nil,
               state: nil,
-              zip: nil
+              postal_code: nil,
+              country: nil
             }
           },
           lines: []
@@ -95,11 +97,12 @@ RSpec.describe Api::V1::PurchaseOrdersController, type: :controller do
             external_customer_ref: "CUST-998",
             name: "Acme Inc",
             email: "buy@acme.example",
-            address: {
-              line_1: "1 Main St",
+            shipping_address: {
+              line1: "1 Main St",
               city: "New York",
               state: "NY",
-              zip: "10001"
+              postal_code: "10001",
+              country: "US"
             }
           },
           lines: [
@@ -127,11 +130,12 @@ RSpec.describe Api::V1::PurchaseOrdersController, type: :controller do
             external_customer_ref: nil,
             name: nil,
             email: "invalid-email",
-            address: {
-              line_1: nil,
+            shipping_address: {
+              line1: nil,
               city: nil,
               state: nil,
-              zip: nil
+              postal_code: nil,
+              country: nil
             }
           },
           lines: []

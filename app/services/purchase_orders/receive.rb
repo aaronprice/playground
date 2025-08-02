@@ -12,7 +12,7 @@ class PurchaseOrders::Receive
   #     "external_customer_ref": "CUST-998",
   #     "name": "Acme Inc",
   #     "email": "buy@acme.example",
-  #     "shipping_address": { "line1":"1 Main", "city":"NYC", "region":"NY", "postal_code":"10001", "country":"US" }
+  #     "shipping_address": { "line1":"1 Main", "city":"NYC", "state":"NY", "postal_code":"10001", "country":"US" }
   #   },
   #   "lines": [
   #     { "sku":"SKU-001", "quantity":2 },
@@ -31,6 +31,7 @@ class PurchaseOrders::Receive
         required(:line1).filled(:string)
         optional(:line2).maybe(:string)
         required(:city).filled(:string)
+        required(:state).filled(:string)
         required(:postal_code).filled(:string)
         required(:country).filled(:string, format?: /\A(?:US|CA)\z/)
       end
@@ -135,6 +136,13 @@ class PurchaseOrders::Receive
     @value["customer"]["id"] = @customer.id
     @value["customer"]["external_customer_ref"] = @customer.external_customer_ref
     @value["customer"]["name"] = @customer.name
+    @value["customer"]["email"] = @customer.email
+    @value["customer"]["line1"] = @customer.line1
+    @value["customer"]["line2"] = @customer.line2
+    @value["customer"]["city"] = @customer.city
+    @value["customer"]["state"] = @customer.state
+    @value["customer"]["postal_code"] = @customer.postal_code
+    @value["customer"]["country"] = @customer.country
   end
 
   def upsert_purchase_order
@@ -147,7 +155,6 @@ class PurchaseOrders::Receive
     @value["purchase_order"] ||= {}
     @value["purchase_order"]["id"] = @purchase_order.id
     @value["purchase_order"]["external_po_id"] = @purchase_order.external_po_id
-    @value["purchase_order"]["customer_id"] = @purchase_order.customer_id
     @value["purchase_order"]["currency"] = @purchase_order.currency
   end
 

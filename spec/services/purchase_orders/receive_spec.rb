@@ -13,6 +13,7 @@ RSpec.describe PurchaseOrders::Receive do
           "line1" => "1 Main St",
           "line2" => "Suite 100",
           "city" => "New York",
+          "state" => "NY",
           "postal_code" => "10001",
           "country" => "US"
         }
@@ -229,6 +230,15 @@ RSpec.describe PurchaseOrders::Receive do
             result = service.call
 
             expect(result.errors["customer.shipping_address.city"]).to be_present
+          end
+
+          it 'requires state' do
+            params = valid_params.deep_dup
+            params["customer"]["shipping_address"].delete("state")
+            service = described_class.new(params)
+            result = service.call
+
+            expect(result.errors["customer.shipping_address.state"]).to be_present
           end
 
           it 'requires postal_code' do
