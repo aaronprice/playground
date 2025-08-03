@@ -6,7 +6,9 @@ services:
       - .:/app
     ports:
       - "3102:3000"
-    env_file: .env.development
+    env_file:
+      - .env
+      - .env.development
     depends_on:
       - db
       - redis
@@ -16,7 +18,9 @@ services:
     command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - .:/app
-    env_file: .env.development
+    env_file:
+      - .env
+      - .env.development
     depends_on:
       - db
       - redis
