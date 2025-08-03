@@ -1,57 +1,16 @@
-require "dry/schema"
+# frozen_string_literal: true
 
 class PurchaseOrders::Receive
-  include Dry::Schema
-  include ActiveModel::Model
 
   # == Constants ============================================================
 
-  # {
-  #   "external_po_id": "PO-12345",
-  #   "customer": {
-  #     "external_customer_ref": "CUST-998",
-  #     "name": "Acme Inc",
-  #     "email": "buy@acme.example",
-  #     "shipping_address": { "line1":"1 Main", "city":"NYC", "state":"NY", "postal_code":"10001", "country":"US" }
-  #   },
-  #   "lines": [
-  #     { "sku":"SKU-001", "quantity":2 },
-  #     { "sku":"SKU-002", "quantity":1 }
-  #   ],
-  #   "requested_ship_date": "2025-08-05",
-  #   "currency": "USD"
-  # }
-  PurchaseOrderParamsSchema = Dry::Schema.Params do
-    required(:external_po_id).filled(:string)
-    required(:customer).hash do
-      required(:external_customer_ref).filled(:string)
-      required(:name).filled(:string)
-      required(:email).filled(:string, format?: /@/)
-      optional(:shipping_address).hash do
-        required(:line1).filled(:string)
-        optional(:line2).maybe(:string)
-        required(:city).filled(:string)
-        required(:state).filled(:string)
-        required(:postal_code).filled(:string)
-        required(:country).filled(:string, format?: /\A(?:US|CA)\z/)
-      end
-    end
-    required(:lines).array(:hash) do
-      required(:sku).filled(:string)
-      required(:quantity).filled(:integer)
-    end
-    optional(:requested_ship_date).filled(:string, format?: /\A(?!0000)([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\z/)
-    required(:currency).filled(:string, format?: /\A(?:USD|CAD)\z/)
-  end
-
-  Result = Struct.new(:success?, :value, :errors)
-
   # == Attributes ===========================================================
 
-  attr_reader :params, :value,
-              :customer, :purchase_order
+  attr_reader :customer, :purchase_order
 
   # == Extensions ===========================================================
+
+  include Serviceable
 
   # == Relationships ========================================================
 
@@ -59,7 +18,7 @@ class PurchaseOrders::Receive
 
   # == Validations ==========================================================
 
-  validate :validate_inputs
+  validate :validate_lines
 
   # == Callbacks ============================================================
 
@@ -67,31 +26,9 @@ class PurchaseOrders::Receive
 
   # == Class Methods ========================================================
 
-  def self.call(params)
-    new(params).call
-  end
-
   # == Instance Methods =====================================================
 
-  def initialize(params)
-    @params = params
-    @value = {}
-  end
-
-  def call
-    if valid?
-      perform
-    else
-      Result.new(false, {}, errors.to_hash.deep_stringify_keys)
-    end
-  end
-
   private
-
-  def validate_inputs
-    validate_lines
-    validate_schema
-  end
 
   # This is necessary because of a bug in Dry::Schema
   # that doesn't properly validate a mininmum amount of
@@ -103,12 +40,43 @@ class PurchaseOrders::Receive
     end
   end
 
-  def validate_schema
-    result = PurchaseOrderParamsSchema.(@params)
-    return if result.success?
-
-    result.errors.each do |msg|
-      errors.add(msg.path.join('.'), msg.text)
+  def schema
+    # {
+    #   "external_po_id": "PO-12345",
+    #   "customer": {
+    #     "external_customer_ref": "CUST-998",
+    #     "name": "Acme Inc",
+    #     "email": "buy@acme.example",
+    #     "shipping_address": { "line1":"1 Main", "city":"NYC", "state":"NY", "postal_code":"10001", "country":"US" }
+    #   },
+    #   "lines": [
+    #     { "sku":"SKU-001", "quantity":2 },
+    #     { "sku":"SKU-002", "quantity":1 }
+    #   ],
+    #   "requested_ship_date": "2025-08-05",
+    #   "currency": "USD"
+    # }
+    Dry::Schema.Params do
+      required(:external_po_id).filled(:string)
+      required(:customer).hash do
+        required(:external_customer_ref).filled(:string)
+        required(:name).filled(:string)
+        required(:email).filled(:string, format?: /@/)
+        optional(:shipping_address).hash do
+          required(:line1).filled(:string)
+          optional(:line2).maybe(:string)
+          required(:city).filled(:string)
+          required(:state).filled(:string)
+          required(:postal_code).filled(:string)
+          required(:country).filled(:string, format?: /\A(?:US|CA)\z/)
+        end
+      end
+      required(:lines).array(:hash) do
+        required(:sku).filled(:string)
+        required(:quantity).filled(:integer)
+      end
+      optional(:requested_ship_date).filled(:string, format?: /\A(?!0000)([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\z/)
+      required(:currency).filled(:string, format?: /\A(?:USD|CAD)\z/)
     end
   end
 
@@ -116,8 +84,7 @@ class PurchaseOrders::Receive
     upsert_customer
     upsert_purchase_order
     upsert_purchase_order_lines
-
-    Result.new(true, @value, {})
+    fetch_prices_for_lines
   end
 
   def upsert_customer
@@ -168,5 +135,11 @@ class PurchaseOrders::Receive
 
     @value["purchase_order"] ||= {}
     @value["purchase_order"]["lines_count"] = @purchase_order.purchase_order_lines.count
+  end
+
+  def fetch_prices_for_lines
+    @purchase_order.purchase_order_lines.where(unit_price: nil).find_each do |line|
+      FetchSkuPriceJob.perform_later(line.id)
+    end
   end
 end

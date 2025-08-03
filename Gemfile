@@ -45,7 +45,9 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
-gem "dry-monads"
+# HTTP client for API calls
+gem "httparty"
+
 gem "dry-schema"
 
 group :development, :test do
@@ -76,4 +78,5 @@ group :test do
   # RSpec for testing
   gem "rspec-rails"
   gem "factory_bot_rails"
+  gem "webmock"
 end
