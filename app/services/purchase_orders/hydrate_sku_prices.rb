@@ -59,13 +59,26 @@ class PurchaseOrders::HydrateSkuPrices
     if response.success?
       data = ::JSON.parse(response.body)
 
+      # Check if price field exists and is not empty
+      if data["price"].nil? || data["price"].to_s.strip.empty?
+        handle_error_response(response)
+        return
+      end
+
+      unit_price = BigDecimal(data["price"].to_s)
+      total_price = (BigDecimal(data["price"].to_s) * @purchase_order_line.quantity).round(3)
+
       @purchase_order_line.update(
-        unit_price: BigDecimal(data["price"]),
-        total_price: (BigDecimal(data["price"]) * @purchase_order_line.quantity).round(3)
+        unit_price: unit_price,
+        total_price: total_price
       )
     else
       handle_error_response(response)
     end
+  rescue ::JSON::ParserError => e
+    handle_exception(e)
+  rescue ArgumentError => e
+    handle_exception(e)
   rescue StandardError => e
     handle_exception(e)
   end

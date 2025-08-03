@@ -5,11 +5,9 @@ require "dry/schema"
 module Serviceable
   extend ActiveSupport::Concern
 
+  Result = Struct.new(:success?, :value, :errors)
+
   included do
-    # == Constants ============================================================
-
-    Result = Struct.new(:success?, :value, :errors)
-
     # == Attributes ===========================================================
 
     attr_reader :params, :value
