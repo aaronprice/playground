@@ -10,7 +10,7 @@ module Serviceable
   included do
     # == Attributes ===========================================================
 
-    attr_reader :params, :value
+    attr_reader :params, :context, :value
 
     # == Extensions ===========================================================
 
@@ -37,8 +37,9 @@ module Serviceable
 
     # == Instance Methods =====================================================
 
-    def initialize(params)
+    def initialize(params = {}, context = {})
       @params = params
+      @context = context
       @value = {}
     end
   end
