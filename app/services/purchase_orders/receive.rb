@@ -61,22 +61,22 @@ class PurchaseOrders::Receive
       required(:customer).hash do
         required(:external_customer_ref).filled(:string)
         required(:name).filled(:string)
-        required(:email).filled(SanitisedTypes::Email)
+        required(:email).filled(CanonicalTypes::Email)
         optional(:shipping_address).hash do
           required(:line1).filled(:string)
           optional(:line2).maybe(:string)
           required(:city).filled(:string)
           required(:state).filled(:string)
           required(:postal_code).filled(:string)
-          required(:country).filled(SanitisedTypes::CountryCode)
+          required(:country).filled(CanonicalTypes::CountryCode)
         end
       end
       required(:lines).array(:hash) do
         required(:sku).filled(:string)
         required(:quantity).filled(:integer)
       end
-      optional(:requested_ship_date).filled(SanitisedTypes::Date)
-      required(:currency).filled(SanitisedTypes::Currency)
+      optional(:requested_ship_date).filled(CanonicalTypes::Date)
+      required(:currency).filled(CanonicalTypes::Currency)
     end
   end
 
