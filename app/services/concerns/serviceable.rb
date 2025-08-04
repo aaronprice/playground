@@ -69,10 +69,16 @@ module Serviceable
 
   def validate_schema
     schema_validation_result = schema.(@params)
-    return if schema_validation_result.success?
-
-    schema_validation_result.errors.each do |error|
-      errors.add(error.path.join('.'), error.text)
+    if schema_validation_result.success?
+      @sanitized_params = schema_validation_result.to_h.deep_stringify_keys
+    else
+      schema_validation_result.errors.each do |error|
+        errors.add(error.path.join('.'), error.text)
+      end
     end
+  end
+
+  def sanitized_params
+    @sanitized_params || @params
   end
 end

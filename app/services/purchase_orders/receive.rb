@@ -35,7 +35,7 @@ class PurchaseOrders::Receive
   # objects in an array. Without it, if "lines" was
   # empty in the params, it would result in a 500 error.
   def validate_lines
-    if @params["lines"].is_a?(Array) && @params["lines"].empty?
+    if sanitized_params["lines"].is_a?(Array) && sanitized_params["lines"].empty?
       errors.add(:lines, "cannot be empty")
     end
   end
@@ -61,22 +61,22 @@ class PurchaseOrders::Receive
       required(:customer).hash do
         required(:external_customer_ref).filled(:string)
         required(:name).filled(:string)
-        required(:email).filled(:string, format?: /@/)
+        required(:email).filled(SanitisedTypes::Email)
         optional(:shipping_address).hash do
           required(:line1).filled(:string)
           optional(:line2).maybe(:string)
           required(:city).filled(:string)
           required(:state).filled(:string)
           required(:postal_code).filled(:string)
-          required(:country).filled(:string, format?: /\A(?:US|CA)\z/)
+          required(:country).filled(SanitisedTypes::CountryCode)
         end
       end
       required(:lines).array(:hash) do
         required(:sku).filled(:string)
         required(:quantity).filled(:integer)
       end
-      optional(:requested_ship_date).filled(:string, format?: /\A(?!0000)([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\z/)
-      required(:currency).filled(:string, format?: /\A(?:USD|CAD)\z/)
+      optional(:requested_ship_date).filled(SanitisedTypes::Date)
+      required(:currency).filled(SanitisedTypes::Currency)
     end
   end
 
@@ -88,15 +88,15 @@ class PurchaseOrders::Receive
   end
 
   def upsert_customer
-    @customer = Customer.create_or_find_by!(external_customer_ref: @params["customer"]["external_customer_ref"]) do |customer|
-      customer.name = @params.dig("customer", "name")
-      customer.email = @params.dig("customer", "email")
-      customer.line1 = @params.dig("customer", "shipping_address", "line1")
-      customer.line2 = @params.dig("customer", "shipping_address", "line2")
-      customer.city = @params.dig("customer", "shipping_address", "city")
-      customer.state = @params.dig("customer", "shipping_address", "state")
-      customer.postal_code = @params.dig("customer", "shipping_address", "postal_code")
-      customer.country = @params.dig("customer", "shipping_address", "country")
+    @customer = Customer.create_or_find_by!(external_customer_ref: sanitized_params["customer"]["external_customer_ref"]) do |customer|
+      customer.name = sanitized_params.dig("customer", "name")
+      customer.email = sanitized_params.dig("customer", "email")
+      customer.line1 = sanitized_params.dig("customer", "shipping_address", "line1")
+      customer.line2 = sanitized_params.dig("customer", "shipping_address", "line2")
+      customer.city = sanitized_params.dig("customer", "shipping_address", "city")
+      customer.state = sanitized_params.dig("customer", "shipping_address", "state")
+      customer.postal_code = sanitized_params.dig("customer", "shipping_address", "postal_code")
+      customer.country = sanitized_params.dig("customer", "shipping_address", "country")
     end
 
     @value["customer"] ||= {}
@@ -113,10 +113,10 @@ class PurchaseOrders::Receive
   end
 
   def upsert_purchase_order
-    @purchase_order = PurchaseOrder.create_or_find_by!(external_po_id: @params["external_po_id"]) do |purchase_order|
+    @purchase_order = PurchaseOrder.create_or_find_by!(external_po_id: sanitized_params["external_po_id"]) do |purchase_order|
       purchase_order.customer = @customer
-      purchase_order.requested_ship_date = @params["requested_ship_date"]
-      purchase_order.currency = @params["currency"]
+      purchase_order.requested_ship_date = sanitized_params["requested_ship_date"]
+      purchase_order.currency = sanitized_params["currency"]
     end
 
     @value["purchase_order"] ||= {}
@@ -126,10 +126,10 @@ class PurchaseOrders::Receive
   end
 
   def upsert_purchase_order_lines
-    @params["lines"].each do |line|
+    sanitized_params["lines"].each do |line|
       @purchase_order.purchase_order_lines.create_or_find_by!(sku: line["sku"]) do |purchase_order_line|
         purchase_order_line.quantity = line["quantity"]
-        purchase_order_line.currency = @params["currency"]
+        purchase_order_line.currency = sanitized_params["currency"]
       end
     end
 

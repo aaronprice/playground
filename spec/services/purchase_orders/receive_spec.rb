@@ -455,6 +455,69 @@ RSpec.describe PurchaseOrders::Receive do
     end
   end
 
+  describe 'sanitization' do
+    it 'strips whitespace from string fields' do
+      params_with_whitespace = {
+        "external_po_id" => "  PO-12345  ",
+        "customer" => {
+          "external_customer_ref" => "  CUST-998  ",
+          "name" => "  Acme Inc  ",
+          "email" => "  buy@acme.example  "
+        },
+        "lines" => [{ "sku" => "  SKU-001  ", "quantity" => 1 }],
+        "currency" => "  USD  "
+      }
+      service = described_class.new(params_with_whitespace)
+      result = service.call
+
+      expect(result).to be_success
+      expect(result.errors).to be_empty
+    end
+
+    it 'converts email to lowercase' do
+      params_with_uppercase_email = {
+        "external_po_id" => "PO-12345",
+        "customer" => {
+          "external_customer_ref" => "CUST-998",
+          "name" => "Acme Inc",
+          "email" => "BUY@ACME.EXAMPLE"
+        },
+        "lines" => [{ "sku" => "SKU-001", "quantity" => 1 }],
+        "currency" => "USD"
+      }
+      service = described_class.new(params_with_uppercase_email)
+      result = service.call
+
+      expect(result).to be_success
+      expect(result.errors).to be_empty
+    end
+
+    it 'converts state and country codes to uppercase' do
+      params_with_lowercase_codes = {
+        "external_po_id" => "PO-12345",
+        "customer" => {
+          "external_customer_ref" => "CUST-998",
+          "name" => "Acme Inc",
+          "email" => "buy@acme.example",
+          "shipping_address" => {
+            "line1" => "123 Main St",
+            "city" => "New York",
+            "state" => "ny",
+            "postal_code" => "10001",
+            "country" => "us"
+          }
+        },
+        "lines" => [{ "sku" => "SKU-001", "quantity" => 1 }],
+        "currency" => "usd"
+      }
+      service = described_class.new(params_with_lowercase_codes)
+      result = service.call
+
+      expect(result).to be_success
+      expect(result.errors).to be_empty
+    end
+  end
+
   describe 'integration scenarios' do
     it 'handles complete valid purchase order' do
       service = described_class.new(valid_params)
