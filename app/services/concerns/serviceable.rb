@@ -7,6 +7,12 @@ module Serviceable
 
   Result = Struct.new(:success?, :value, :errors)
 
+  class_methods do
+    def call(params)
+      new(params).call
+    end
+  end
+
   included do
     # == Attributes ===========================================================
 
@@ -28,12 +34,6 @@ module Serviceable
     # == Callbacks ============================================================
 
     # == Scopes ===============================================================
-
-    # == Class Methods ========================================================
-
-    def self.call(params)
-      new(params).call
-    end
 
     # == Instance Methods =====================================================
 
